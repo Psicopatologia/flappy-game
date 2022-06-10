@@ -30,6 +30,7 @@ const init = () => {
 const handleComplete = () => {
   createClouds();
   createFlappy();
+  createPipes();
   stage.on("stagemousedown", jumpFlappy);
 }
 
@@ -71,6 +72,27 @@ const jumpFlappy = () => {
   .call(gameOver);
 }
 
+const createPipes = () => {
+  let topPipe, bottomPipe;
+  let position = Math.floor(Math.random()*280+100);
+
+  topPipe = new createjs.Bitmap(loader.getResult("pipe"));
+  topPipe.y = position-75;
+  topPipe.x = stage.canvas.width / 2;
+  topPipe.rotation = 180
+  topPipe.name = "pipe";
+
+  bottomPipe = new createjs.Bitmap(loader.getResult("pipe"));
+  bottomPipe.y = position+75;
+  bottomPipe.x = stage.canvas.width / 2;
+  bottomPipe.skewY = 180;
+  bottomPipe.name = "pipe";
+
+  topPipe.regX = bottomPipe.regX = topPipe.image.width / 2;
+
+  stage.addChild(bottomPipe, topPipe)
+}
+
 const gameOver = () => {
   console.log("Game Over")
-}
+} 
