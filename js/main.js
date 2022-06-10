@@ -30,6 +30,7 @@ const init = () => {
 const handleComplete = () => {
   createClouds();
   createFlappy();
+  stage.on("stagemousedown", jumpFlappy);
 }
 
 const createClouds = () => {
@@ -45,6 +46,11 @@ const createClouds = () => {
   clouds[2].y = 130;
 
   for (let i = 0; i < 3; i++) {
+    let directionMultiplier = i % 2 == 0 ? -1: 1;
+    let [oX, oY] = [clouds[i].x, clouds[i].y];
+    createjs.Tween.get(clouds[i], {loop: true})
+    .to({x: clouds[i].x-(200*directionMultiplier)}, 3000, createjs.Ease.getPowInOut(2))
+    .to({x: oX}, 3000, createjs.Ease.getPowInOut(2));
     stage.addChild(clouds[i]);
   }
 }
@@ -56,4 +62,15 @@ const createFlappy = () => {
   flappy.x = stage.canvas.width / 2;
   flappy.y = stage.canvas.height / 2;
   stage.addChild(flappy)
+}
+
+const jumpFlappy = () => {
+  createjs.Tween.get(flappy, {override: true})
+  .to({y: flappy.y - 60, rotation: -10}, 500, createjs.Ease.getPowOut(2))
+  .to({y: stage.canvas.height + (flappy.image.width / 2), rotation: 30}, 1500, createjs.Ease.getPowIn(2))
+  .call(gameOver);
+}
+
+const gameOver = () => {
+  console.log("Game Over")
 }
