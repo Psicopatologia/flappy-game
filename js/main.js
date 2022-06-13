@@ -1,8 +1,9 @@
 let stage, loader, flappy;
+let started = false;
 
 const init = () => {
   stage = new createjs.Stage("gameCanvas");
-  
+
   createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
   createjs.Ticker.framerate = 60;
   createjs.Ticker.addEventListener("tick", stage);
@@ -17,9 +18,9 @@ const init = () => {
   stage.addChild(background);
 
   let manifest = [
-    {"src": "cloud.png", "id": "cloud"},
-    {"src": "flappy.png", "id": "flappy"},
-    {"src": "pipe.png", "id": "pipe"}
+    { "src": "cloud.png", "id": "cloud" },
+    { "src": "flappy.png", "id": "flappy" },
+    { "src": "pipe.png", "id": "pipe" }
   ];
 
   loader = new createjs.LoadQueue(true);
@@ -30,13 +31,12 @@ const init = () => {
 const handleComplete = () => {
   createClouds();
   createFlappy();
-  createPipes();
   stage.on("stagemousedown", jumpFlappy);
 }
 
 const createClouds = () => {
   let clouds = [];
-  for (let i = 0; i<3; i++) {
+  for (let i = 0; i < 3; i++) {
     clouds.push(new createjs.Bitmap(loader.getResult("cloud")));
   }
   clouds[0].x = 40;
@@ -47,16 +47,19 @@ const createClouds = () => {
   clouds[2].y = 130;
 
   for (let i = 0; i < 3; i++) {
-    let directionMultiplier = i % 2 == 0 ? -1: 1;
+    let directionMultiplier = i % 2 == 0 ? -1 : 1;
     let [oX, oY] = [clouds[i].x, clouds[i].y];
-    createjs.Tween.get(clouds[i], {loop: true})
-    .to({x: clouds[i].x-(200*directionMultiplier)}, 3000, createjs.Ease.getPowInOut(2))
-    .to({x: oX}, 3000, createjs.Ease.getPowInOut(2));
+    createjs.Tween.get(clouds[i], { loop: true })
+      .to({ x: clouds[i].x - (200 * directionMultiplier) }, 3000, createjs.Ease.getPowInOut(2))
+      .to({ x: oX }, 3000, createjs.Ease.getPowInOut(2));
     stage.addChild(clouds[i]);
   }
 }
 
 const createFlappy = () => {
+  if (!started) {
+    startGame();
+  }
   flappy = new createjs.Bitmap(loader.getResult("flappy"));
   flappy.regX = flappy.image.width / 2;
   flappy.regY = flappy.image.height / 2;
@@ -66,31 +69,49 @@ const createFlappy = () => {
 }
 
 const jumpFlappy = () => {
-  createjs.Tween.get(flappy, {override: true})
-  .to({y: flappy.y - 60, rotation: -10}, 500, createjs.Ease.getPowOut(2))
-  .to({y: stage.canvas.height + (flappy.image.width / 2), rotation: 30}, 1500, createjs.Ease.getPowIn(2))
-  .call(gameOver);
+  createjs.Tween.get(flappy, { override: true })
+    .to({ y: flappy.y - 60, rotation: -10 }, 500, createjs.Ease.getPowOut(2))
+    .to({ y: stage.canvas.height + (flappy.image.width / 2), rotation: 30 }, 1500, createjs.Ease.getPowIn(2))
+    .call(gameOver);
 }
 
 const createPipes = () => {
   let topPipe, bottomPipe;
-  let position = Math.floor(Math.random()*280+100);
+  let position = Math.floor(Math.random() * 280 + 100);
 
   topPipe = new createjs.Bitmap(loader.getResult("pipe"));
-  topPipe.y = position-75;
-  topPipe.x = stage.canvas.width / 2;
+  topPipe.y = position - 75;
+  topPipe.x = stage.canvas.width + (topPipe.image.width / 2);
   topPipe.rotation = 180
   topPipe.name = "pipe";
 
   bottomPipe = new createjs.Bitmap(loader.getResult("pipe"));
-  bottomPipe.y = position+75;
-  bottomPipe.x = stage.canvas.width / 2;
+  bottomPipe.y = position + 75;
+  bottomPipe.x = stage.canvas.width + (bottomPipe.image.width / 2);
   bottomPipe.skewY = 180;
   bottomPipe.name = "pipe";
 
   topPipe.regX = bottomPipe.regX = topPipe.image.width / 2;
 
+  createjs.Tween.get(topPipe)
+    .to({ x: 0 - topPipe.image.width }, 10000)
+    .call(() => removePipe(topPipe))
+
+  createjs.Tween.get(bottomPipe)
+    .to({ x: 0 - bottomPipe.image.width }, 10000)
+    .call(() => removePipe(bottomPipe))
+
   stage.addChild(bottomPipe, topPipe)
+}
+
+const removePipe = (pipe) => {
+  stage.removeChild(pipe)
+}
+
+const startGame = () => {
+  started = true;
+  createPipes()
+  setInterval(createPipes, 6000);
 }
 
 const gameOver = () => {
