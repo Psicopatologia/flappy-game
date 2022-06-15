@@ -1,5 +1,4 @@
-let stage, loader, flappy;
-let started = false;
+let stage, loader, flappy, jumpListener, pipeCreator, started;
 // let polygon;
 
 const init = () => {
@@ -10,7 +9,10 @@ const init = () => {
   createjs.Ticker.addEventListener("tick", stage);
 
   const background = new createjs.Shape();
-  background.graphics.beginLinearGradientFill(["#257388", "#6C88DA", "#567A32"], [0, 0.8, 0.83], 0, 0, 0, 480).drawRect(0, 0, 320, 480);
+  background.graphics.beginLinearGradientFill(
+    ["#257388", "#6C88DA", "#567A32"], [0, 0.8, 0.83], 0, 0, 0, 480
+  )
+  .drawRect(0, 0, 320, 480);
   background.x = 0;
   background.y = 0;
   background.name = "background";
@@ -30,9 +32,10 @@ const init = () => {
 }
 
 const handleComplete = () => {
+  started = false;
   createClouds();
   createFlappy();
-  stage.on("stagemousedown", jumpFlappy);
+  jumpListener = stage.on("stagemousedown", jumpFlappy);
   createjs.Ticker.addEventListener('tick', checkCollision);
   // polygon = new createjs.Shape()
   // stage.addChild(polygon)
@@ -115,7 +118,7 @@ const removePipe = (pipe) => {
 const startGame = () => {
   started = true;
   createPipes()
-  setInterval(createPipes, 6000);
+  pipeCreator = setInterval(createPipes, 6000);
 }
 
 const checkCollision = () => {
@@ -145,4 +148,18 @@ const checkCollision = () => {
 
 const gameOver = () => {
   createjs.Tween.removeAllTweens();
-} 
+  stage.off("stagemousedown", jumpListener);
+  clearInterval(pipeCreator);
+  createjs.Ticker.removeEventListener('tick', checkCollision);
+  setTimeout(() => {
+    stage.on('stagemousedown', resetGame, null, true);
+  }, 2000)
+}
+
+const resetGame = () => {
+  let childrenToRemove = stage.children.filter((child) => child.name != "background");
+  for (let i = 0; i < childrenToRemove.length; i++) {
+    stage.removeChild(childrenToRemove[i]);
+  }
+  handleComplete()
+}
