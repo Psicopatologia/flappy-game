@@ -1,9 +1,8 @@
-let stage, loader, flappy, jumpListener, pipeCreator, started;
+let stage, loader, flappy, jumpListener, pipeCreator, started, score, scoreText, scoreTextOutline;
 // let polygon;
 
 const init = () => {
   stage = new createjs.Stage("gameCanvas");
-
   createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
   createjs.Ticker.framerate = 60;
   createjs.Ticker.addEventListener("tick", stage);
@@ -34,6 +33,7 @@ const init = () => {
 const handleComplete = () => {
   started = false;
   createClouds();
+  createScore();
   createFlappy();
   jumpListener = stage.on("stagemousedown", jumpFlappy);
   createjs.Ticker.addEventListener('tick', checkCollision);
@@ -103,16 +103,53 @@ const createPipes = () => {
   createjs.Tween.get(topPipe)
     .to({ x: 0 - topPipe.image.width }, 10000)
     .call(() => removePipe(topPipe))
+    .addEventListener("change", updatePipe)
 
   createjs.Tween.get(bottomPipe)
     .to({ x: 0 - bottomPipe.image.width }, 10000)
     .call(() => removePipe(bottomPipe))
 
-  stage.addChild(bottomPipe, topPipe)
+  let scoreIndex = stage.getChildIndex(scoreText);
+  
+  stage.addChildAt(bottomPipe, topPipe, scoreIndex)
 }
 
 const removePipe = (pipe) => {
   stage.removeChild(pipe)
+}
+
+const updatePipe = (event) => {
+  let pipeUpdated = event.target.target;
+  if ((pipeUpdated.x - pipeUpdated.regX + pipeUpdated.image.width) < (flappy.x - flappy.regX)) {
+    event.target.removeEventListener("change", updatePipe);
+    incrementScore();
+  }
+}
+
+const createScore = () => {
+  score = 0;
+  scoreText = new createjs.Text(score, "bold 48px Arial", "#FFFFFF");
+  scoreText.textAlign = "center";
+  score.textBaseline = "middle"
+  scoreText.x = 40;
+  scoreText.y = 40;
+  let bounds = scoreText.getBounds();
+  scoreText.cache(-40, -40, bounds.width*3 + Math.abs(bounds.x), bounds.height*3 + Math.abs(bounds.y));
+  
+  scoreTextOutline = scoreText.clone();
+  scoreTextOutline.color = "#000000";
+  scoreTextOutline.outline = 2;
+  bounds = scoreTextOutline.getBounds();
+  scoreTextOutline.cache(-40, -40, bounds.width*3 + Math.abs(bounds.x), bounds.height*3 + Math.abs(bounds.y));
+  
+  stage.addChild(scoreText, scoreTextOutline);
+}
+
+const incrementScore = () => {
+  score++;
+  scoreText.text = scoreTextOutline.text = score;
+  scoreTextOutline.updateCache()
+  scoreText.updateCache();
 }
 
 const startGame = () => {
